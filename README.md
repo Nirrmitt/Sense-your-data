@@ -1,4 +1,4 @@
-# RetailIQ | Ask Your Data
+# RetailIQ | Sense Your Data
 
 A small local analytics workspace for turning retail questions into read-only PostgreSQL query previews. It includes a FastAPI service, a Streamlit interface, and a PostgreSQL database managed with Docker Compose.
 
