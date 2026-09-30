@@ -368,3 +368,19 @@ Confirm FastAPI is running at `http://localhost:8000`. If it uses another addres
 - RAG/document search is not implemented.
 - The evaluation harness covers API availability only, not SQL correctness, latency, or answer quality.
 - Although the database image includes pgvector, this application does not currently create or use vector embeddings.
+
+## 🤝 Connect & Contribute
+I’m always open to feedback, collaboration, or chat about analytics engineering, automation, or data storytelling.
+
+📧 Email: nirrmit.rtickoo@gmail.com
+
+🌐 Portfolio: [NRT](https://nirrmitt.github.io/NRT-Terminal)
+
+💼 LinkedIn: [Nirrmit R. Tickoo](https://www.linkedin.com/in/n-r-t/)
+
+🐙 GitHub: [ @nirrmitt](https://github.com/Nirrmitt)
+
+🔧 Found a bug or have an idea? Open an issue or submit a PR. I review all contributions!
+
+### 📜 License
+MIT ©[Nirrmitt](https://nirrmitt.github.io/NRT-Terminal) Feel free to use, adapt, and build upon this for your own projects or learning journey.
