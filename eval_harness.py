@@ -1,7 +1,10 @@
 import os
 import sys
 
+from dotenv import load_dotenv
 import requests
+
+load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 HEALTH_CHECKS = {

@@ -25,11 +25,29 @@ app = FastAPI(title="Ask Your Data API", lifespan=lifespan)
 
 
 def get_llm_client() -> AsyncOpenAI:
-    api_key = os.getenv("OPENAI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if openrouter_key:
+        api_key = openrouter_key
+        base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        default_headers = {
+            "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:8501"),
+            "X-Title": os.getenv("OPENROUTER_APP_NAME", "RetailIQ"),
+        }
+    else:
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL")
+        default_headers = None
+
     if not api_key or api_key == "your_openai_api_key_here":
-        raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not configured.")
+        raise HTTPException(status_code=503, detail="Configure OPENROUTER_API_KEY or OPENAI_API_KEY.")
     if app.state.llm_client is None:
-        app.state.llm_client = AsyncOpenAI(api_key=api_key, timeout=30.0, max_retries=2)
+        app.state.llm_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            default_headers=default_headers,
+            timeout=30.0,
+            max_retries=2,
+        )
     return app.state.llm_client
 
 
@@ -38,8 +56,11 @@ async def call_llm(question: str, system_prompt: str) -> str:
         max_tokens = min(int(os.getenv("MAX_TOKENS_LIMIT", "4096")), 4096)
     except ValueError as exc:
         raise HTTPException(status_code=500, detail="MAX_TOKENS_LIMIT must be an integer.") from exc
+    openrouter_enabled = bool(os.getenv("OPENROUTER_API_KEY"))
+    default_model = "openrouter/auto" if openrouter_enabled else "gpt-4o-mini"
+    model = os.getenv("OPENROUTER_MODEL" if openrouter_enabled else "MODEL_NAME", default_model)
     response = await get_llm_client().chat.completions.create(
-        model=os.getenv("MODEL_NAME", "gpt-4o-mini"),
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question},
