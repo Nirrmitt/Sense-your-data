@@ -1,12 +1,25 @@
-# RetailIQ | Sense Your Data
+<h1 align="center">RetailIQ | Sense Your Data</h1>
+<p align="center"><strong>A text-to-SQL analytics workspace that turns plain-language retail questions into guarded, read-only PostgreSQL query previews.</strong></p>
 
-A small local analytics workspace for turning retail questions into read-only PostgreSQL query previews. It includes a FastAPI service, a Streamlit interface, and a PostgreSQL database managed with Docker Compose.
+<p align="center">
+  <a href="https://github.com/Nirrmitt/Sense-your-data"><img src="https://img.shields.io/badge/Source-GitHub-24292F?style=flat&logo=github&logoColor=white" alt="Source on GitHub" /></a>
+  <a href="https://nirrmitt.github.io/NRT-Terminal/demos/retailiq.html"><img src="https://img.shields.io/badge/Live_Demo-In_browser-38bdf8?style=flat" alt="Live demo" /></a>
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/UI-Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/License-MIT-2ea44f?style=flat" alt="MIT license" />
+</p>
 
-> **Current scope:** the application generates and checks SQL, but does not execute it. Document search (RAG) is not implemented yet. The evaluation script checks service health; it does not measure SQL accuracy.
+**RetailIQ** pairs a FastAPI service with a Streamlit analyst desk. A user asks a retail question in plain language; the API sends it, with the declared `products` and `sales` schema, to an OpenAI-compatible chat model (OpenRouter or OpenAI), checks the returned SQL with an output filter, and shows it as a syntax-highlighted preview. Failures surface as readable errors rather than fabricated results. PostgreSQL 16 (pgvector image) runs locally through Docker Compose.
+
+**Project:** [Source code](https://github.com/Nirrmitt/Sense-your-data) · [Live in-browser demo](https://nirrmitt.github.io/NRT-Terminal/demos/retailiq.html)
+
+> **Demo scope:** the application generates and checks SQL, but does not execute it. Document search (RAG) is not implemented yet. The evaluation script checks service health; it does not measure SQL accuracy. The [live demo](https://nirrmitt.github.io/NRT-Terminal/demos/retailiq.html) is a lightweight in-browser version on sample data, built into the portfolio site (source: [`demos/retailiq.html`](https://github.com/Nirrmitt/NRT-Terminal/blob/main/demos/retailiq.html) in the NRT-Terminal repo); it is separate from this repository's FastAPI/Streamlit stack.
 
 ## Contents
 
-- [Features](#features)
+- [What it demonstrates](#what-it-demonstrates)
+- [At a glance](#at-a-glance)
 - [Technical architecture](#technical-architecture)
 - [Data models](#data-models)
 - [API reference](#api-reference)
@@ -16,19 +29,29 @@ A small local analytics workspace for turning retail questions into read-only Po
 - [Setup on Windows](#setup-on-windows)
 - [Run the application](#run-the-application)
 - [Use the API](#use-the-api)
-- [Checks](#checks)
+- [Development and checks](#checks)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 - [Security notes](#security-notes)
-- [Known limitations](#known-limitations)
+- [Known limitations and next steps](#known-limitations-and-next-steps)
 
-## Features
+## What it demonstrates
 
-- Generate a PostgreSQL `SELECT` query from a plain-language question using OpenRouter or OpenAI.
-- Reject model output that does not begin with `SELECT` or contains selected write-operation keywords, comments, or multiple statements.
-- Browse the query builder in a Streamlit UI with service status and schema reference.
-- Start PostgreSQL 16 with the pgvector image using Docker Compose.
-- Keep provider keys in a local `.env` file that is excluded from Git.
+- **Provider-flexible LLM integration:** an async OpenAI-compatible client targets OpenRouter (preferred when its key is set) or OpenAI, with `temperature=0`, a capped token limit, a 30-second timeout, and two SDK retries.
+- **Guarded model output:** a regular-expression filter requires a single `SELECT`, and rejects comments, multiple statements, and selected write/administrative keywords before anything is returned.
+- **Validated API surface:** Pydantic trims and bounds questions (1 to 2,000 characters); distinct HTTP codes separate invalid input (`422`), missing configuration (`503`), and provider or rejected-output failures (`502`).
+- **Honest UI states:** the Streamlit desk shows API health, request timeouts, and provider errors, and states plainly that document search is not connected.
+- **Reproducible local stack:** Docker Compose for PostgreSQL, SQLAlchemy table setup, an environment template with no credentials, and an API smoke-check script.
+
+## At a glance
+
+| | |
+|---|---|
+| **API and UI** | FastAPI, Streamlit |
+| **Model integration** | `AsyncOpenAI` client; OpenRouter or OpenAI chat completions |
+| **Database** | PostgreSQL 16 (pgvector image) via Docker Compose; SQLAlchemy models |
+| **Output safety** | Regex-based single-`SELECT` filter (SQL is not executed) |
+| **Checks** | `compileall`, `pip check`, API health smoke script |
 
 ## Technical architecture
 
@@ -285,7 +308,7 @@ The returned SQL is a preview only. It is not run against PostgreSQL and no quer
 
 ## Checks
 
-Run these from the project directory with the virtual environment activated:
+There is no unit-test suite yet. Run these from the project directory with the virtual environment activated:
 
 ```powershell
 python -m compileall -q main.py setup_db.py eval_harness.py app\streamlit_app.py
@@ -360,7 +383,7 @@ Confirm FastAPI is running at `http://localhost:8000`. If it uses another addres
 - The SQL validator is a lightweight output filter, not a complete SQL parser or authorization boundary. Do not execute model-generated SQL or expose this service publicly without database-level read-only permissions, authentication, network controls, and stronger SQL validation.
 - The current endpoint does not execute generated SQL, so it does not return database data.
 
-## Known limitations
+## Known limitations and next steps
 
 - SQL generation depends on a configured provider key, accessible model, and available provider quota.
 - The model sees the declared `products` and `sales` schema. The database is not queried for live schema metadata.
@@ -368,6 +391,9 @@ Confirm FastAPI is running at `http://localhost:8000`. If it uses another addres
 - RAG/document search is not implemented.
 - The evaluation harness covers API availability only, not SQL correctness, latency, or answer quality.
 - Although the database image includes pgvector, this application does not currently create or use vector embeddings.
+- There is no automated test suite or CI workflow; validation is limited to the checks listed above.
+
+**Reasonable next steps** (not implemented): execute validated queries through a read-only database role, replace the regex filter with a SQL parser, add a labeled question/SQL evaluation set, read live schema metadata, and build document retrieval behind `/rag`.
 
 ## 🤝 Connect & Contribute
 I’m always open to feedback, collaboration, or chat about analytics engineering, automation, or data storytelling.
